@@ -68,7 +68,7 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         "Al idioma extranjero": { # Traducción DESDE español HACIA idioma extranjero
             "I": 124, "II": 140, "III": 154, "IV": 185, "V": 205
         }
-    } #
+    }
     MINIMO_PALABRAS_NO_PUBLICAS = 250
 
     costo_base_traduccion_total = 0
@@ -197,8 +197,6 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         texto_presupuesto += f"* **Proceso:** Esta es una alternativa ágil si el destinatario del documento acepta este formato. Yo me encargo de todo el proceso y la legalización se emite en formato digital por el Colegio.\n"
         texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_digital)} ARS**.\n" 
 
-        # NOTA: Los siguientes bullet points fueron reestructurados para evitar problemas de concatenación de texto y Markdown.
-        # Cada punto es ahora una línea Markdown separada.
         texto_presupuesto += f"* Este monto incluye mis honorarios (${format_currency(costo_base_traduccion_total)} ARS) y la tasa por la legalización digital del Colegio (${format_currency(tasa_legalizacion_digital)} ARS).\n"
 
         if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
