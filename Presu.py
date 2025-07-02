@@ -1,15 +1,22 @@
 import streamlit as st
 
-def generar_presupuesto(fojas, idioma, tipo_documento, tipo_legalizacion, tasa_pagada_por_cliente):
-    # Precios por foja, anidados por idioma y luego por tipo de documento
+def generar_presupuesto(tipo_traduccion, lista_documentos, idioma_destino, tasa_pagada_por_cliente):
+    # --- Precios para TRADUCCIONES PÚBLICAS (por foja) ---
+    # Anidados por idioma de destino y luego por tipo de documento
     precios_por_foja = {
-        "Alemán": { # Corresponde a la Columna II
+        "Español": { # Idioma de destino es Español (Columna "Al español" de tu tabla de públicas)
+            "Partidas, pasaportes, certificados y demás documentos personales": 49800,
+            "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 51100,
+            "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 57700,
+            "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 62800,
+        },
+        "Alemán": { # Idioma de destino es Alemán (Columna II "Al idioma extranjero" de tu tabla de públicas)
             "Partidas, pasaportes, certificados y demás documentos personales": 67800,
             "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 81700,
             "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 89000,
             "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 96800,
         },
-        "Inglés": { # Corresponde a la Columna I
+        "Inglés": { # Idioma de destino es Inglés (Columna I "Al idioma extranjero" de tu tabla de públicas)
             "Partidas, pasaportes, certificados y demás documentos personales": 60800,
             "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 69700,
             "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 74400,
@@ -17,105 +24,274 @@ def generar_presupuesto(fojas, idioma, tipo_documento, tipo_legalizacion, tasa_p
         }
     }
 
-    costo_por_foja_actual = precios_por_foja.get(idioma, {}).get(tipo_documento, 0)
-    costo_base_traduccion = fojas * costo_por_foja_actual
+    # --- Precios para TRADUCCIONES SIN CARÁCTER PÚBLICO (por palabra) ---
+    # Anidados por tipo de traducción (Al español vs Al idioma extranjero) y luego por categoría (I-V)
+    precios_por_palabra = {
+        "Al español": { # Idioma de destino es Español
+            "I": 101, "II": 103, "III": 127, "IV": 154, "V": 164
+        },
+        "Al idioma extranjero": { # Idioma de destino es Alemán o Inglés
+            "I": 124, "II": 140, "III": 154, "IV": 185, "V": 205
+        }
+    }
+    MINIMO_PALABRAS_NO_PUBLICAS = 250
+
+    costo_base_traduccion_total = 0
+    detalles_documentos = ""
+    tipo_calculo_texto = "" # Para el texto del presupuesto
+
+    if not lista_documentos:
+        st.warning("Por favor, agregá al menos un documento para generar el presupuesto.")
+        return ""
+
+    if tipo_traduccion == "Traducción Pública":
+        tipo_calculo_texto = "por foja"
+        for i, doc in enumerate(lista_documentos):
+            nombre_referencia = doc['nombre_referencia']
+            fojas_doc = doc['fojas']
+            tipo_documento_doc = doc['tipo_documento']
+
+            costo_por_foja_actual = precios_por_foja.get(idioma_destino, {}).get(tipo_documento_doc, 0)
+            costo_documento = fojas_doc * costo_por_foja_actual
+            costo_base_traduccion_total += costo_documento
+
+            detalles_documentos += (
+                f"- **{nombre_referencia}** ({fojas_doc} fojas, tipo: \"{tipo_documento_doc}\"): "
+                f"${costo_documento:,.0f}\n"
+            )
+    else: # Traducción sin carácter público
+        tipo_calculo_texto = "por palabra"
+        for i, doc in enumerate(lista_documentos):
+            nombre_referencia = doc['nombre_referencia']
+            palabras_doc = doc['palabras']
+            categoria_idioma = doc['categoria_idioma']
+
+            # Determinar la clave para precios_por_palabra
+            clave_precio_palabra = "Al español" if idioma_destino == "Español" else "Al idioma extranjero"
+            
+            costo_por_palabra_actual = precios_por_palabra.get(clave_precio_palabra, {}).get(categoria_idioma, 0)
+            
+            costo_documento_bruto = palabras_doc * costo_por_palabra_actual
+            
+            # Aplicar mínimo de 250 palabras
+            costo_documento = max(costo_documento_bruto, MINIMO_PALABRAS_NO_PUBLICAS * costo_por_palabra_actual)
+            
+            costo_base_traduccion_total += costo_documento
+
+            detalles_documentos += (
+                f"- **{nombre_referencia}** ({palabras_doc} palabras, categoría: \"{categoria_idioma}\"): "
+                f"${costo_documento:,.0f}"
+            )
+            if palabras_doc < MINIMO_PALABRAS_NO_PUBLICAS:
+                detalles_documentos += f" (se aplica el mínimo de {MINIMO_PALABRAS_NO_PUBLICAS} palabras)\n"
+            else:
+                detalles_documentos += "\n"
 
     tasa_legalizacion_digital = 21000
     tasa_legalizacion_presencial = 24000
-    recargo_gestion_presencial = 24000 # Diferencia entre 270.500 y (222.500 + 24.000)
+    recargo_gestion_presencial = 24000
 
     # Seña
-    sena = costo_base_traduccion * 0.5
+    sena = costo_base_traduccion_total * 0.5
 
     texto_presupuesto = f"¡Hola!\n\n"
-    texto_presupuesto += f"Necesitás una **traducción pública al {idioma.lower()}** de tu documento \"{tipo_documento}\" ({fojas} fojas).\n\n"
-    texto_presupuesto += f"--- \n\n"
-    texto_presupuesto += f"## Presupuesto de Traducción Pública al {idioma} \n\n"
-    texto_presupuesto += f"El **costo base por la traducción** es de **${costo_base_traduccion:,.0f}**. Este monto es solo por mi trabajo de traducción y mi firma/sello (físico o digital), sin incluir ninguna tasa de legalización del Colegio de Traductores Públicos.\n\n"
+    texto_presupuesto += f"Necesitás una **{tipo_traduccion.lower()} al {idioma_destino.lower()}** de los siguientes documentos:\n"
+    texto_presupuesto += detalles_documentos
+    texto_presupuesto += f"\n--- \n\n"
+    texto_presupuesto += f"## Presupuesto de {tipo_traduccion} al {idioma_destino} \n\n"
+    texto_presupuesto += f"El **costo base por la traducción** es de **${costo_base_traduccion_total:,.0f}**. Este monto es solo por mi trabajo de traducción y mi firma/sello (físico o digital), sin incluir ninguna tasa de legalización del Colegio de Traductores Públicos.\n\n"
     texto_presupuesto += f"Para confirmar el trabajo, te pido una **seña del 50% (${sena:,.0f})** mediante transferencia bancaria.\n\n"
     texto_presupuesto += f"--- \n\n"
     texto_presupuesto += f"## Proceso y Opciones de Legalización \n\n"
-    texto_presupuesto += f"Una vez que la traducción esté lista, te voy a avisar. Si la legalización es presencial, vas a tener que acercarte a mi domicilio en Recoleta (zona Alto Palermo) con el **documento original**. Ahí mismo voy a **cosellar** y abrochar tu documento original a la traducción, que ya va a tener mi firma y sello. Este paso es fundamental para que sea una traducción pública válida.\n\n"
-    texto_presupuesto += f"Para la **legalización**, que es la certificación del Colegio de Traductores Públicos (CTPCBA) que valida mi firma y matrícula, tenés estas opciones:\n\n"
 
-    # Opción 1: Legalización Digital
-    costo_total_digital = costo_base_traduccion + tasa_legalizacion_digital
-    texto_presupuesto += f"### Opción 1: Legalización Digital \n\n"
-    texto_presupuesto += f"* **Proceso:** Esta es una alternativa ágil si el destinatario del documento acepta este formato. Yo me encargo de todo el proceso y la legalización se emite en formato digital por el Colegio.\n"
-    texto_presupuesto += f"* **Costo Total:** **${costo_total_digital:,.0f}**. Este monto incluye mis honorarios (${costo_base_traduccion:,.0f}) y la tasa por la legalización digital del Colegio (${tasa_legalizacion_digital:,.0f}). "
+    # La sección de legalización solo aplica para traducciones públicas
+    if tipo_traduccion == "Traducción Pública":
+        texto_presupuesto += f"Una vez que la traducción esté lista, te voy a avisar. Si la legalización es presencial, vas a tener que acercarte a mi domicilio en Recoleta (zona Alto Palermo) con el **documento original**. Ahí mismo voy a **cosellar** y abrochar tu documento original a la traducción, que ya va a tener mi firma y sello. Este paso es fundamental para que sea una traducción pública válida.\n\n"
+        texto_presupuesto += f"Para la **legalización**, que es la certificación del Colegio de Traductores Públicos (CTPCBA) que valida mi firma y matrícula, tenés estas opciones:\n\n"
 
-    if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
-        texto_presupuesto += f"Vos vas a pagar la tasa de ${tasa_legalizacion_digital:,.0f} directamente al Colegio de Traductores a través de transferencia bancaria.\n"
-    else:
-        texto_presupuesto += f"Yo me ocupo de gestionar y pagar la tasa de ${tasa_legalizacion_digital:,.0f}.\n"
+        # Opción 1: Legalización Digital
+        costo_total_digital = costo_base_traduccion_total + tasa_legalizacion_digital
+        texto_presupuesto += f"### Opción 1: Legalización Digital \n\n"
+        texto_presupuesto += f"* **Proceso:** Esta es una alternativa ágil si el destinatario del documento acepta este formato. Yo me encargo de todo el proceso y la legalización se emite en formato digital por el Colegio.\n"
+        texto_presupuesto += f"* **Costo Total:** **${costo_total_digital:,.0f}**. Este monto incluye mis honorarios (${costo_base_traduccion_total:,.0f}) y la tasa por la legalización digital del Colegio (${tasa_legalizacion_digital:,.0f}). "
 
-    texto_presupuesto += f"* **Aclaración:** Con esta opción, no vas a necesitar acercarte a mi domicilio para entregar el original o retirar la traducción, ya que todo el proceso es digital.\n\n---\n\n"
+        if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
+            texto_presupuesto += f"Vos vas a pagar la tasa de ${tasa_legalizacion_digital:,.0f} directamente al Colegio de Traductores a través de transferencia bancaria.\n"
+        else:
+            texto_presupuesto += f"Yo me ocupo de gestionar y pagar la tasa de ${tasa_legalizacion_digital:,.0f}.\n"
 
-    # Opción 2: Legalización Presencial gestionada por vos
-    costo_total_presencial_vos = costo_base_traduccion + tasa_legalizacion_presencial
-    texto_presupuesto += f"### Opción 2: Legalización Presencial gestionada por vos \n\n"
-    texto_presupuesto += f"* **Proceso:** Yo te voy a entregar la traducción ya abrochada al original. Después, vos o la persona que designes, la van a tener que llevar a legalizar a la sede del Colegio en Av. Corrientes 1834 (atienden de lunes a viernes de 9 a 17 hs). El trámite se hace en el momento y no necesitás turno.\n"
-    texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_vos:,.0f}** (mis honorarios de ${costo_base_traduccion:,.0f} **+** la tasa de legalización del Colegio de ${tasa_legalizacion_presencial:,.0f}, que pagás directamente a ellos con tarjeta o transferencia).\n\n---\n\n"
+        texto_presupuesto += f"* **Aclaración:** Con esta opción, no vas a necesitar acercarte a mi domicilio para entregar el original o retirar la traducción, ya que todo el proceso es digital.\n\n---\n\n"
 
-    # Opción 3: Legalización Presencial gestionada por mí
-    costo_total_presencial_mio = costo_base_traduccion + tasa_legalizacion_presencial + recargo_gestion_presencial
-    texto_presupuesto += f"### Opción 3: Legalización Presencial gestionada por mí \n\n"
-    texto_presupuesto += f"* **Proceso:** Si preferís que yo me ocupe de todo, vas a tener que acercarte a mi domicilio en dos ocasiones:\n"
-    texto_presupuesto += f"    1. La primera vez, para entregarme el documento original.\n"
-    texto_presupuesto += f"    2. La segunda vez, para retirar el documento original junto con la traducción y la legalización del Colegio.\n"
-    texto_presupuesto += f"    Yo mismo voy a llevar el documento a legalizar y te lo voy a entregar listo para que lo uses.\n"
-    texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_mio:,.0f}**. Este monto ya incluye mis honorarios, la tasa del Colegio y el recargo por la gestión.\n\n---\n\n"
+        # Opción 2: Legalización Presencial gestionada por vos
+        costo_total_presencial_vos = costo_base_traduccion_total + tasa_legalizacion_presencial
+        texto_presupuesto += f"### Opción 2: Legalización Presencial gestionada por vos \n\n"
+        texto_presupuesto += f"* **Proceso:** Yo te voy a entregar la traducción ya abrochada al original. Después, vos o la persona que designes, la van a tener que llevar a legalizar a la sede del Colegio en Av. Corrientes 1834 (atienden de lunes a viernes de 9 a 17 hs). El trámite se hace en el momento y no necesitás turno.\n"
+        texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_vos:,.0f}** (mis honorarios de ${costo_base_traduccion_total:,.0f} **+** la tasa de legalización del Colegio de ${tasa_legalizacion_presencial:,.0f}, que pagás directamente a ellos con tarjeta o transferencia).\n\n---\n\n"
+
+        # Opción 3: Legalización Presencial gestionada por mí
+        costo_total_presencial_mio = costo_base_traduccion_total + tasa_legalizacion_presencial + recargo_gestion_presencial
+        texto_presupuesto += f"### Opción 3: Legalización Presencial gestionada por mí \n\n"
+        texto_presupuesto += f"* **Proceso:** Si preferís que yo me ocupe de todo, vas a tener que acercarte a mi domicilio en dos ocasiones:\n"
+        texto_presupuesto += f"    1. La primera vez, para entregarme el documento original.\n"
+        texto_presupuesto += f"    2. La segunda vez, para retirar el documento original junto con la traducción y la legalización del Colegio.\n"
+        texto_presupuesto += f"    Yo mismo voy a llevar el documento a legalizar y te lo voy a entregar listo para que lo uses.\n"
+        texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_mio:,.0f}**. Este monto ya incluye mis honorarios, la tasa del Colegio y el recargo por la gestión.\n\n---\n\n"
+    else: # Traducción sin carácter público no tiene legalización del Colegio
+        texto_presupuesto += f"Las traducciones sin carácter público no requieren legalización del Colegio de Traductores Públicos.\n\n---\n\n"
+
 
     texto_presupuesto += f"Espero que esta información te sea útil para decidir cómo querés seguir. ¡Avisame cualquier consulta!"
 
     return texto_presupuesto
 
 st.set_page_config(layout="wide")
-st.title("Generador de Presupuestos de Traducción Pública")
+st.title("Generador de Presupuestos de Traducción")
 
 st.sidebar.header("Configuración del Presupuesto")
-fojas = st.sidebar.number_input("Cantidad de fojas del documento:", min_value=1.0, value=2.5, step=0.5)
 
-# Selector de Idioma
-idioma = st.sidebar.selectbox(
-    "Idioma de la traducción:",
-    ("Alemán", "Inglés")
+# Inicializar st.session_state para almacenar los documentos
+if 'documentos' not in st.session_state:
+    st.session_state.documentos = []
+
+# Selector de Tipo de Traducción (Pública o No Pública)
+tipo_traduccion = st.sidebar.radio(
+    "Tipo de Traducción:",
+    ("Traducción Pública", "Traducción sin carácter público")
 )
 
-# Opciones de tipo de documento basadas en la tabla
-opciones_documento = [
+# Selector de Idioma de Destino
+idioma_destino = st.sidebar.selectbox(
+    "Idioma de la traducción:",
+    ("Alemán", "Inglés", "Español")
+)
+
+st.sidebar.subheader("Agregar Documentos")
+
+# Opciones de tipo de documento para traducciones públicas
+opciones_documento_publico = [
     "Partidas, pasaportes, certificados y demás documentos personales",
     "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación",
     "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar",
     "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención"
 ]
-tipo_documento = st.sidebar.selectbox("Tipo de documento:", opciones_documento, index=0) # Index 0 selecciona la primera opción por defecto
 
-tipo_legalizacion = st.sidebar.selectbox(
-    "¿Qué tipo de legalización preferís?",
-    ("Digital", "Presencial gestionada por vos", "Presencial gestionada por mí")
-)
+# Opciones de categoría para traducciones no públicas
+opciones_categoria_no_publica = ["I", "II", "III", "IV", "V"]
 
+
+with st.sidebar.form("form_agregar_documento"):
+    nombre_referencia_nuevo = st.text_input("Nombre de referencia del documento (ej: 'Partida de Nacimiento', 'Contrato XYZ')")
+
+    if tipo_traduccion == "Traducción Pública":
+        fojas_nuevo = st.number_input("Cantidad de fojas de este documento:", min_value=1.0, value=1.0, step=0.5)
+        tipo_documento_nuevo = st.selectbox("Tipo de documento:", opciones_documento_publico)
+        palabras_nuevo = None # No aplica
+        categoria_idioma_nuevo = None # No aplica
+    else: # Traducción sin carácter público
+        palabras_nuevo = st.number_input("Cantidad de palabras de este documento:", min_value=1, value=250, step=1)
+        
+        # Lógica para preseleccionar y deshabilitar la categoría según el idioma
+        default_categoria_idioma = None
+        disabled_categoria = False
+
+        if idioma_destino == "Inglés":
+            default_categoria_idioma = "I"
+            disabled_categoria = True
+        elif idioma_destino == "Alemán":
+            default_categoria_idioma = "II"
+            disabled_categoria = True
+        
+        # Encontrar el índice de la opción por defecto para el selectbox
+        default_index = 0
+        if default_categoria_idioma:
+            try:
+                default_index = opciones_categoria_no_publica.index(default_categoria_idioma)
+            except ValueError:
+                default_index = 0 # Si no se encuentra, vuelve al primero
+
+        categoria_idioma_nuevo = st.selectbox(
+            "Categoría por idioma (I-V):", 
+            opciones_categoria_no_publica, 
+            index=default_index, 
+            disabled=disabled_categoria
+        )
+        fojas_nuevo = None # No aplica
+        tipo_documento_nuevo = None # No aplica
+
+
+    col_add, col_clear = st.columns(2)
+    with col_add:
+        if st.form_submit_button("Agregar Documento"):
+            if nombre_referencia_nuevo and \
+               ((tipo_traduccion == "Traducción Pública" and fojas_nuevo > 0) or \
+                (tipo_traduccion == "Traducción sin carácter público" and palabras_nuevo > 0)):
+                
+                doc_data = {
+                    'nombre_referencia': nombre_referencia_nuevo,
+                    'tipo_traduccion': tipo_traduccion # Guardamos el tipo de traducción con el documento
+                }
+                if tipo_traduccion == "Traducción Pública":
+                    doc_data['fojas'] = fojas_nuevo
+                    doc_data['tipo_documento'] = tipo_documento_nuevo
+                else:
+                    doc_data['palabras'] = palabras_nuevo
+                    doc_data['categoria_idioma'] = categoria_idioma_nuevo
+
+                st.session_state.documentos.append(doc_data)
+                st.success(f"Documento '{nombre_referencia_nuevo}' agregado.")
+            else:
+                st.error("Por favor, ingresá un nombre de referencia y fojas/palabras válidas para el documento.")
+    with col_clear:
+        if st.form_submit_button("Limpiar todos los documentos"):
+            st.session_state.documentos = []
+            st.info("Lista de documentos limpiada.")
+
+
+st.sidebar.subheader("Documentos Agregados:")
+if st.session_state.documentos:
+    for idx, doc in enumerate(st.session_state.documentos):
+        if doc['tipo_traduccion'] == "Traducción Pública":
+            st.sidebar.write(f"{idx+1}. **{doc['nombre_referencia']}** ({doc['fojas']} fojas, {doc['tipo_documento']})")
+        else:
+            st.sidebar.write(f"{idx+1}. **{doc['nombre_referencia']}** ({doc['palabras']} palabras, Cat. {doc['categoria_idioma']})")
+else:
+    st.sidebar.write("No hay documentos agregados.")
+
+
+st.sidebar.markdown("---") # Separador visual
+
+# Las opciones de legalización solo se muestran si es una traducción pública
+tipo_legalizacion = None
 tasa_pagada_por_cliente = None
-if tipo_legalizacion == "Digital":
-    tasa_pagada_por_cliente = st.sidebar.radio(
-        "¿Quién paga la tasa de legalización digital del Colegio?",
-        ("No, que la gestione el traductor", "Sí, que la pague el cliente")
+
+if tipo_traduccion == "Traducción Pública":
+    tipo_legalizacion = st.sidebar.selectbox(
+        "¿Qué tipo de legalización preferís?",
+        ("Digital", "Presencial gestionada por vos", "Presencial gestionada por mí")
     )
+
+    if tipo_legalizacion == "Digital":
+        tasa_pagada_por_cliente = st.sidebar.radio(
+            "¿Quién paga la tasa de legalización digital del Colegio?",
+            ("No, que la gestione el traductor", "Sí, que la pague el cliente")
+        )
 
 if st.sidebar.button("Generar Presupuesto"):
-    presupuesto_generado = generar_presupuesto(fojas, idioma, tipo_documento, tipo_legalizacion, tasa_pagada_por_cliente)
-    st.markdown(presupuesto_generado)
+    # Pasamos el tipo_traduccion al generador de presupuesto
+    presupuesto_generado = generar_presupuesto(tipo_traduccion, st.session_state.documentos, idioma_destino, tasa_pagada_por_cliente)
+    if presupuesto_generado: # Solo si no hubo un warning por falta de documentos
+        st.markdown(presupuesto_generado)
 
-    st.download_button(
-        label="Descargar Presupuesto (TXT)",
-        data=presupuesto_generado,
-        file_name="presupuesto_traduccion.txt",
-        mime="text/plain"
-    )
+        st.download_button(
+            label="Descargar Presupuesto (TXT)",
+            data=presupuesto_generado,
+            file_name="presupuesto_traduccion.txt",
+            mime="text/plain"
+        )
 
 st.markdown("---")
 st.markdown("### Notas:")
-st.markdown("- Los precios por foja corresponden a las Categorías I (Inglés) y II (Alemán) de la tabla provista.")
-st.markdown("- Las tasas de legalización son fijas y pueden variar según el Colegio.")
+st.markdown("- Los precios por foja corresponden a las categorías de la tabla provista para traducciones públicas.")
+st.markdown("- Los aranceles por palabra para traducciones sin carácter público se basan en la tabla provista, con un mínimo de 250 palabras.")
+st.markdown("- Las tasas de legalización son fijas y pueden variar según el Colegio. Solo aplican para traducciones públicas.")
 st.markdown("- Recordá que los precios deben ser ajustados a tus tarifas reales y a las actualizaciones del Colegio.")
