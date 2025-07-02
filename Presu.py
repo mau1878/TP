@@ -377,7 +377,7 @@ st.sidebar.markdown("---") # Separador visual
 # Nuevo campo para que el usuario ingrese el domicilio
 domicilio_traductor = st.sidebar.text_input(
     "Tu domicilio para retiro/entrega de documentos:",
-    value="Recoleta (zona Alto Palermo)" # Valor por defecto
+    value="Microcentro" # Valor por defecto
 )
 
 # Las opciones de legalización solo se muestran si hay al menos una traducción pública agregada
