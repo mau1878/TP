@@ -2,8 +2,8 @@ import streamlit as st
 
 def format_currency(value):
     """
-    Formatea un valor numérico como moneda argentina (punto de mil, coma decimal)
-    sin incluir el signo '$' ni 'ARS'. Se agrega solo el punto de miles.
+    Formatea un valor numérico como moneda argentina (punto de mil, sin decimales).
+    No incluye el signo '$' ni 'ARS'. Devuelve solo el número con el punto de miles.
     """
     int_value = int(value)
     s = str(int_value)
@@ -195,9 +195,10 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         costo_total_digital = costo_base_traduccion_total + tasa_legalizacion_digital
         texto_presupuesto += f"### Opción 1: Legalización Digital \n\n"
         texto_presupuesto += f"* **Proceso:** Esta es una alternativa ágil si el destinatario del documento acepta este formato. Yo me encargo de todo el proceso y la legalización se emite en formato digital por el Colegio.\n"
-        texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_digital)} ARS**.\n" # <-- Formato y fin de línea
+        texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_digital)} ARS**.\n" 
 
-        # Se separa la explicación en un nuevo bullet point para evitar concatenación
+        # NOTA: Los siguientes bullet points fueron reestructurados para evitar problemas de concatenación de texto y Markdown.
+        # Cada punto es ahora una línea Markdown separada.
         texto_presupuesto += f"* Este monto incluye mis honorarios (${format_currency(costo_base_traduccion_total)} ARS) y la tasa por la legalización digital del Colegio (${format_currency(tasa_legalizacion_digital)} ARS).\n"
 
         if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
@@ -211,9 +212,8 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         costo_total_presencial_vos = costo_base_traduccion_total + tasa_legalizacion_presencial
         texto_presupuesto += f"### Opción 2: Legalización Presencial gestionada por vos \n\n"
         texto_presupuesto += f"* **Proceso:** Yo te voy a entregar la traducción ya abrochada al original. Después, vos o la persona que designes, la van a tener que llevar a legalizar a la sede del Colegio en Av. Corrientes 1834 (atienden de lunes a viernes de 9 a 17 hs). El trámite se hace en el momento y no necesitás turno.\n"
-        texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_presencial_vos)} ARS**.\n" # <-- Formato y fin de línea
+        texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_presencial_vos)} ARS**.\n" 
 
-        # Se separa la explicación en un nuevo bullet point
         texto_presupuesto += f"* Este monto incluye mis honorarios (${format_currency(costo_base_traduccion_total)} ARS) y la tasa de legalización del Colegio de ${format_currency(tasa_legalizacion_presencial)} ARS, que pagás directamente a ellos con tarjeta o transferencia.\n\n---\n\n"
 
         # Opción 3: Legalización Presencial gestionada por mí
@@ -225,7 +225,6 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         texto_presupuesto += f"    * Yo mismo voy a llevar el documento a legalizar y te lo voy a entregar listo para que lo uses.\n" 
         texto_presupuesto += f"* **Costo Total:** **${format_currency(costo_total_presencial_mio)} ARS**.\n" 
         
-        # Se separa la explicación en un nuevo bullet point
         texto_presupuesto += f"* Este monto ya incluye mis honorarios, la tasa del Colegio y el recargo por la gestión.\n\n---\n\n"
     else: # Ninguna traducción pública, no aplica legalización del Colegio
         texto_presupuesto += f"Las traducciones sin carácter público no requieren legalización del Colegio de Traductores Públicos. Este presupuesto no incluye traducciones públicas.\n\n---\n\n"
