@@ -23,7 +23,7 @@ def format_currency(value):
     return formatted_s
 
 
-def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
+def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_traductor):
     # --- Precios para TRADUCCIONES PÚBLICAS (por foja) ---
     # Anidados por dirección (Al español / Al idioma extranjero), luego por Categoría (I/II)
     # y finalmente por tipo de documento.
@@ -188,7 +188,8 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
     hay_traduccion_publica = any(doc.get('tipo_traduccion') == "Traducción Pública" for doc in lista_documentos)
 
     if hay_traduccion_publica:
-        texto_presupuesto += f"Una vez que la traducción (o las traducciones públicas) estén listas, te voy a avisar. Si la legalización es presencial, vas a tener que acercarte a mi domicilio en Recoleta (zona Alto Palermo) con el **documento original**. Ahí mismo voy a **cosellar** y abrochar tu documento original a la traducción, que ya va a tener mi firma y sello. Este paso es fundamental para que sea una traducción pública válida.\n\n"
+        # Usamos el domicilio ingresado por el usuario
+        texto_presupuesto += f"Una vez que la traducción (o las traducciones públicas) estén listas, te voy a avisar. Si la legalización es presencial, vas a tener que acercarte a mi domicilio en **{domicilio_traductor}** con el **documento original**. Ahí mismo voy a **cosellar** y abrochar tu documento original a la traducción, que ya va a tener mi firma y sello. Este paso es fundamental para que sea una traducción pública válida.\n\n"
         texto_presupuesto += f"Para la **legalización**, que es la certificación del Colegio de Traductores Públicos (CTPCBA) que valida mi firma y matrícula, tenés estas opciones:\n\n"
 
         # Opción 1: Legalización Digital
@@ -373,6 +374,12 @@ else:
 
 st.sidebar.markdown("---") # Separador visual
 
+# Nuevo campo para que el usuario ingrese el domicilio
+domicilio_traductor = st.sidebar.text_input(
+    "Tu domicilio para retiro/entrega de documentos:",
+    value="Recoleta (zona Alto Palermo)" # Valor por defecto
+)
+
 # Las opciones de legalización solo se muestran si hay al menos una traducción pública agregada
 hay_traduccion_publica_en_lista = any(doc.get('tipo_traduccion') == "Traducción Pública" for doc in st.session_state.documentos)
 
@@ -393,7 +400,7 @@ if hay_traduccion_publica_en_lista:
         )
 
 if st.sidebar.button("Generar Presupuesto"):
-    presupuesto_generado = generar_presupuesto(st.session_state.documentos, tasa_pagada_por_cliente)
+    presupuesto_generado = generar_presupuesto(st.session_state.documentos, tasa_pagada_por_cliente, domicilio_traductor)
     if presupuesto_generado: # Solo si no hubo un warning por falta de documentos
         st.markdown(presupuesto_generado)
 
