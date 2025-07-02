@@ -1,4 +1,23 @@
 import streamlit as st
+import locale
+
+# Configurar el locale para formato de moneda argentino (punto de mil, coma decimal)
+# Se usa 'es_AR.UTF-8' para sistemas basados en Unix/Linux
+# y 'Spanish_Argentina' para sistemas Windows.
+try:
+    locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_ALL, 'Spanish_Argentina')
+    except locale.Error:
+        st.warning("No se pudo configurar el locale 'es_AR.UTF-8' o 'Spanish_Argentina'. Los números se formatearán con el locale por defecto del sistema.")
+
+
+def format_currency(value):
+    """Formatea un valor numérico como moneda argentina (punto de mil, coma decimal) y agrega 'ARS'."""
+    # Convertir el número a entero para asegurar 0 decimales, luego formatear con locale
+    return locale.format_string("%d", int(value), grouping=True) + " ARS"
+
 
 def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
     # --- Precios para TRADUCCIONES PÚBLICAS (por foja) ---
@@ -110,7 +129,7 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
 
             detalles_documentos += (
                 f"- **{nombre_referencia}** ({idioma_origen_doc} > {idioma_destino_doc}, {fojas_doc} fojas, tipo: \"{tipo_documento_doc}\"): "
-                f"${costo_documento:,.0f}\n"
+                f"{format_currency(costo_documento)}\n"
             )
         else: # Traducción sin carácter público
             if 'palabras' not in doc or 'categoria_idioma_no_publica' not in doc:
@@ -136,7 +155,7 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
 
             detalles_documentos += (
                 f"- **{nombre_referencia}** ({idioma_origen_doc} > {idioma_destino_doc}, {palabras_doc} palabras, categoría: \"{categoria_idioma_no_publica}\"): "
-                f"${costo_documento:,.0f}"
+                f"{format_currency(costo_documento)}"
             )
             if palabras_doc < MINIMO_PALABRAS_NO_PUBLICAS:
                 detalles_documentos += f" (se aplica el mínimo de {MINIMO_PALABRAS_NO_PUBLICAS} palabras)\n"
@@ -155,8 +174,8 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
     texto_presupuesto += detalles_documentos
     texto_presupuesto += f"\n--- \n\n"
     texto_presupuesto += f"## Presupuesto de Traducción \n\n"
-    texto_presupuesto += f"El **costo base por la traducción** es de **${costo_base_traduccion_total:,.0f}**. Este monto es solo por mi trabajo de traducción y mi firma/sello (físico o digital), sin incluir ninguna tasa de legalización del Colegio de Traductores Públicos.\n\n"
-    texto_presupuesto += f"Para confirmar el trabajo, te pido una **seña del 50% (${sena:,.0f})** mediante transferencia bancaria.\n\n"
+    texto_presupuesto += f"El **costo base por la traducción** es de **{format_currency(costo_base_traduccion_total)}**. Este monto es solo por mi trabajo de traducción y mi firma/sello (físico o digital), sin incluir ninguna tasa de legalización del Colegio de Traductores Públicos.\n\n"
+    texto_presupuesto += f"Para confirmar el trabajo, te pido una **seña del 50% ({format_currency(sena)})** mediante transferencia bancaria.\n\n"
     texto_presupuesto += f"--- \n\n"
     texto_presupuesto += f"## Proceso y Opciones de Legalización \n\n"
 
@@ -172,13 +191,15 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         costo_total_digital = costo_base_traduccion_total + tasa_legalizacion_digital
         texto_presupuesto += f"### Opción 1: Legalización Digital \n\n"
         texto_presupuesto += f"* **Proceso:** Esta es una alternativa ágil si el destinatario del documento acepta este formato. Yo me encargo de todo el proceso y la legalización se emite en formato digital por el Colegio.\n"
-        texto_presupuesto += f"* **Costo Total:** **${costo_total_digital:,.0f}**.\n" # <-- Cambio aquí, asegurar que termine con '.' y '\n'
-        texto_presupuesto += f"* Este monto incluye mis honorarios (${costo_base_traduccion_total:,.0f}) y la tasa por la legalización digital del Colegio (${tasa_legalizacion_digital:,.0f}).\n" # <-- Nuevo bullet y terminación con '.' y '\n'
+        texto_presupuesto += f"* **Costo Total:** **{format_currency(costo_total_digital)}**.\n" # <-- Formato y fin de línea
+
+        # Se separa la explicación en un nuevo bullet point para evitar concatenación
+        texto_presupuesto += f"* Este monto incluye mis honorarios ({format_currency(costo_base_traduccion_total)}) y la tasa por la legalización digital del Colegio ({format_currency(tasa_legalizacion_digital)}).\n"
 
         if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
-            texto_presupuesto += f"* Vos vas a pagar la tasa de ${tasa_legalizacion_digital:,.0f} directamente al Colegio de Traductores a través de transferencia bancaria.\n"
+            texto_presupuesto += f"* Vos vas a pagar la tasa de {format_currency(tasa_legalizacion_digital)} directamente al Colegio de Traductores a través de transferencia bancaria.\n"
         else:
-            texto_presupuesto += f"* Yo me ocupo de gestionar y pagar la tasa de ${tasa_legalizacion_digital:,.0f}.\n"
+            texto_presupuesto += f"* Yo me ocupo de gestionar y pagar la tasa de {format_currency(tasa_legalizacion_digital)}.\n"
 
         texto_presupuesto += f"* **Aclaración:** Con esta opción, no vas a necesitar acercarte a mi domicilio para entregar el original o retirar la traducción, ya que todo el proceso es digital.\n\n---\n\n"
 
@@ -186,18 +207,22 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
         costo_total_presencial_vos = costo_base_traduccion_total + tasa_legalizacion_presencial
         texto_presupuesto += f"### Opción 2: Legalización Presencial gestionada por vos \n\n"
         texto_presupuesto += f"* **Proceso:** Yo te voy a entregar la traducción ya abrochada al original. Después, vos o la persona que designes, la van a tener que llevar a legalizar a la sede del Colegio en Av. Corrientes 1834 (atienden de lunes a viernes de 9 a 17 hs). El trámite se hace en el momento y no necesitás turno.\n"
-        texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_vos:,.0f}**.\n" # <-- Cambio aquí, asegurar que termine con '.' y '\n'
-        texto_presupuesto += f"* Este monto incluye mis honorarios (${costo_base_traduccion_total:,.0f}) y la tasa de legalización del Colegio de ${tasa_legalizacion_presencial:,.0f}, que pagás directamente a ellos con tarjeta o transferencia.\n\n---\n\n" # <-- Nuevo bullet y terminación con '.' y '\n'
+        texto_presupuesto += f"* **Costo Total:** **{format_currency(costo_total_presencial_vos)}**.\n" # <-- Formato y fin de línea
+
+        # Se separa la explicación en un nuevo bullet point
+        texto_presupuesto += f"* Este monto incluye mis honorarios ({format_currency(costo_base_traduccion_total)}) y la tasa de legalización del Colegio de {format_currency(tasa_legalizacion_presencial)}, que pagás directamente a ellos con tarjeta o transferencia.\n\n---\n\n"
 
         # Opción 3: Legalización Presencial gestionada por mí
         costo_total_presencial_mio = costo_base_traduccion_total + tasa_legalizacion_presencial + recargo_gestion_presencial
         texto_presupuesto += f"### Opción 3: Legalización Presencial gestionada por mí \n\n"
         texto_presupuesto += f"* **Proceso:** Si preferís que yo me ocupe de todo, vas a tener que acercarte a mi domicilio en dos ocasiones:\n"
-        texto_presupuesto += f"    1. La primera vez, para entregarme el documento original.\n"
-        texto_presupuesto += f"    2. La segunda vez, para retirar el documento original junto con la traducción y la legalización del Colegio.\n"
-        texto_presupuesto += f"    Yo mismo voy a llevar el documento a legalizar y te lo voy a entregar listo para que lo uses.\n"
-        texto_presupuesto += f"* **Costo Total:** **${costo_total_presencial_mio:,.0f}**.\n" # <-- Asegurar que termina con '.' y '\n'
-        texto_presupuesto += f"* Este monto ya incluye mis honorarios, la tasa del Colegio y el recargo por la gestión.\n\n---\n\n" # <-- Nuevo bullet
+        texto_presupuesto += f"    * La primera vez, para entregarme el documento original.\n" # Cambiado a bullet
+        texto_presupuesto += f"    * La segunda vez, para retirar el documento original junto con la traducción y la legalización del Colegio.\n" # Cambiado a bullet
+        texto_presupuesto += f"    * Yo mismo voy a llevar el documento a legalizar y te lo voy a entregar listo para que lo uses.\n" # Cambiado a bullet
+        texto_presupuesto += f"* **Costo Total:** **{format_currency(costo_total_presencial_mio)}**.\n" # <-- Formato y fin de línea
+        
+        # Se separa la explicación en un nuevo bullet point
+        texto_presupuesto += f"* Este monto ya incluye mis honorarios, la tasa del Colegio y el recargo por la gestión.\n\n---\n\n"
     else: # Ninguna traducción pública, no aplica legalización del Colegio
         texto_presupuesto += f"Las traducciones sin carácter público no requieren legalización del Colegio de Traductores Públicos. Este presupuesto no incluye traducciones públicas.\n\n---\n\n"
 
