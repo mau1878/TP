@@ -1,22 +1,41 @@
 import streamlit as st
-import locale
+# Ya no necesitamos importar locale porque lo haremos manualmente
+# import locale
 
-# Configurar el locale para formato de moneda argentino (punto de mil, coma decimal)
-# Se usa 'es_AR.UTF-8' para sistemas basados en Unix/Linux
-# y 'Spanish_Argentina' para sistemas Windows.
-try:
-    locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
-except locale.Error:
-    try:
-        locale.setlocale(locale.LC_ALL, 'Spanish_Argentina')
-    except locale.Error:
-        st.warning("No se pudo configurar el locale 'es_AR.UTF-8' o 'Spanish_Argentina'. Los números se formatearán con el locale por defecto del sistema.")
+# # Eliminamos el bloque try-except de locale porque no funcionará en Streamlit Share
+# try:
+#     locale.setlocale(locale.LC_ALL, 'es_AR.UTF-8')
+# except locale.Error:
+#     try:
+#         locale.setlocale(locale.LC_ALL, 'Spanish_Argentina')
+#     except locale.Error:
+#         st.warning("No se pudo configurar el locale 'es_AR.UTF-8' o 'Spanish_Argentina'. Los números se formatearán con el locale por defecto del sistema.")
 
 
 def format_currency(value):
-    """Formatea un valor numérico como moneda argentina (punto de mil, coma decimal) y agrega 'ARS'."""
-    # Convertir el número a entero para asegurar 0 decimales, luego formatear con locale
-    return locale.format_string("%d", int(value), grouping=True) + " ARS"
+    """
+    Formatea un valor numérico como moneda argentina (punto de mil, coma decimal)
+    y agrega 'ARS' de forma manual, sin depender de la configuración del sistema.
+    """
+    # Convertir a entero para asegurar 0 decimales
+    int_value = int(value)
+    
+    # Convertir el número a string
+    s = str(int_value)
+    
+    # Revertir el string para insertar los puntos de miles
+    s_reversed = s[::-1]
+    formatted_parts = []
+    
+    for i, char in enumerate(s_reversed):
+        formatted_parts.append(char)
+        if (i + 1) % 3 == 0 and (i + 1) != len(s_reversed):
+            formatted_parts.append('.')
+            
+    # Revertir de nuevo y unir las partes
+    formatted_s = "".join(formatted_parts[::-1])
+    
+    return f"${formatted_s} ARS"
 
 
 def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente):
