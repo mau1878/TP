@@ -183,9 +183,9 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_tra
 
             costo_base_traduccion_total += costo_documento
 
-    tasa_legalizacion_digital = 21000
-    tasa_legalizacion_presencial = 24000
-    recargo_gestion_presencial = 24000
+    tasa_legalizacion_digital = 23000
+    tasa_legalizacion_presencial = 26000
+    recargo_gestion_presencial = 26000
 
     sena = costo_base_traduccion_total * 0.5
 
