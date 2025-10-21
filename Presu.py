@@ -29,33 +29,34 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_tra
     precios_por_foja = {
         "Al español": {
             "I": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 49800,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 51100,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 57700,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 62800,
+                "Partidas, pasaportes, certificados y demás documentos personales": 54300,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 55700,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 62900,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 68500,
             },
             "II": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 52100,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 61900,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 67000,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 73100,
+                "Partidas, pasaportes, certificados y demás documentos personales": 56800,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 67500,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 73000,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 79700,
             }
         },
         "Al idioma extranjero": {
             "I": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 60800,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 69700,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 74400,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 80800,
+                "Partidas, pasaportes, certificados y demás documentos personales": 66300,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 76000,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 81100,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 88100,
             },
             "II": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 67800,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 81700,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 89000,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 96800,
+                "Partidas, pasaportes, certificados y demás documentos personales": 73900,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 89100,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 97000,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 105500,
             }
         }
     }
+
 
     # --- Precios para TRADUCCIONES SIN CARÁCTER PÚBLICO (por palabra) ---
     precios_por_palabra = {
