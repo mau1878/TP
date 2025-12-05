@@ -187,72 +187,79 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_tra
     # Contar cuántas traducciones públicas hay en la lista
     # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN (una por cada traducción pública) ---
     # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN ---
+    # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN (una por cada traducción pública) ---
     cantidad_publicas = sum(1 for doc in lista_documentos if doc.get('tipo_traduccion') == "Traducción Pública")
 
     TASA_DIGITAL_POR_TRADUCCION = 23000
     TASA_PRESENCIAL_POR_TRADUCCION = 26000
-    RECARGO_GESTION_PRESENCIAL_TOTAL = 26000
+    RECARGO_GESTION_PRESENCIAL = 26000
 
     tasa_legalizacion_digital_total = TASA_DIGITAL_POR_TRADUCCION * cantidad_publicas
     tasa_legalizacion_presencial_total = TASA_PRESENCIAL_POR_TRADUCCION * cantidad_publicas
 
-    total_opcion_digital = costo_base_traduccion_total + tasa_legalizacion_digital_total
-    total_opcion_presencial_vos = costo_base_traduccion_total + tasa_legalizacion_presencial_total
-    total_opcion_presencial_yo = costo_base_traduccion_total + tasa_legalizacion_presencial_total + RECARGO_GESTION_PRESENCIAL_TOTAL
+    total_digital = costo_base_traduccion_total + tasa_legalizacion_digital_total
+    total_presencial_cliente = costo_base_traduccion_total + tasa_legalizacion_presencial_total
+    total_presencial_con_gestion = costo_base_traduccion_total + tasa_legalizacion_presencial_total + RECARGO_GESTION_PRESENCIAL
 
     sena = costo_base_traduccion_total * 0.5
 
-    # ... (el texto hasta llegar a las opciones de legalización queda igual)
+    texto_presupuesto = f"¡Hola!\n\n"
+    texto_presupuesto += f"Necesitás una **traducción de los siguientes documentos**:\n"
+    texto_presupuesto += detalles_documentos
+    texto_presupuesto += f"\n--- \n\n"
+    texto_presupuesto += f"## Presupuesto de Traducción \n\n"
+    texto_presupuesto += f"El **costo base por la traducción** es de **${format_currency(costo_base_traduccion_total)} ARS**. Este monto cubre únicamente mi trabajo de traducción y firma/sello, sin incluir tasas de legalización del Colegio.\n\n"
+    texto_presupuesto += f"Para confirmar el trabajo te pido una **seña del 50% (${format_currency(sena)} ARS)** por transferencia.\n\n"
+    texto_presupuesto += f"--- \n\n"
+    texto_presupuesto += f"## Opciones de Legalización \n\n"
 
-    if hay_traduccion_publica := cantidad_publicas > 0:
-        # Frase de introducción corregida y sin errores
+    # ← AQUÍ ESTÁ LA CLAVE: definimos la variable ANTES de usarla
+    hay_traduccion_publica = cantidad_publicas > 0
+
+    if hay_traduccion_publica:
+        # Introducción con singular/plural perfecto
         if cantidad_publicas == 1:
-            texto_presupuesto += "Una vez que la traducción pública esté lista, te voy a avisar. "
+            texto_presupuesto += "Una vez que la traducción pública esté lista, te aviso. "
         else:
-            texto_presupuesto += f"Una vez que las {cantidad_publicas} traducciones públicas estén listas, te voy a avisar. "
+            texto_presupuesto += f"Una vez que las {cantidad_publicas} traducciones públicas estén listas, te aviso. "
 
-        texto_presupuesto += f"Si la legalización es presencial, vas a tener que acercarte a mi domicilio en **{domicilio_traductor}** con "
+        texto_presupuesto += f"En caso de elegir legalización presencial, tendrás que acercarte a mi domicilio en **{domicilio_traductor}** con "
         texto_presupuesto += "el documento original.\n\n" if cantidad_publicas == 1 else "los documentos originales.\n\n"
 
-        texto_presupuesto += f"Para la **legalizar** ante el Colegio de Traductores Públicos (CTPCBA) tenés estas opciones:\n\n"
+        texto_presupuesto += "Para la **legalización ante el Colegio de Traductores Públicos (CTPCBA)** tenés estas opciones:\n\n"
 
         # Opción 1 – Digital
-        texto_presupuesto += "### Opción 1: Legalización Digital\n\n"
-        texto_presupuesto += "* Proceso: 100% online, ideal si aceptan formato digital firmado electrónicamente.\n"
-        texto_presupuesto += f"* **Costo total: ${format_currency(total_opcion_digital)} ARS**\n"
-        texto_presupuesto += f"  → Honorarios de traducción: ${format_currency(costo_base_traduccion_total)} ARS\n"
-        texto_presupuesto += f"  → Tasa digital del Colegio: ${format_currency(TASA_DIGITAL_POR_TRADUCCION)} × {cantidad_publicas} = ${format_currency(tasa_legalizacion_digital_total)} ARS\n"
+        texto_presupuesto += "### Opción 1: Legalización Digital (100% online)\n\n"
+        texto_presupuesto += f"- **Costo total: ${format_currency(total_digital)} ARS**\n"
+        texto_presupuesto += f"  → Honorarios de traducción  : ${format_currency(costo_base_traduccion_total)} ARS\n"
+        texto_presupuesto += f"  → Tasa digital del Colegio  : ${format_currency(TASA_DIGITAL_POR_TRADUCCION)} × {cantidad_publicas} = ${format_currency(tasa_legalizacion_digital_total)} ARS\n\n"
         if tasa_pagada_por_cliente == "Sí, que la pague el cliente":
-            texto_presupuesto += f"* Vos abonarás directamente al Colegio ${format_currency(tasa_legalizacion_digital_total)} ARS cuando te pase el link de pago.\n"
+            texto_presupuesto += f"Vos abonarás directamente al Colegio la suma de ${format_currency(tasa_legalizacion_digital_total)} ARS (te paso el link cuando corresponda).\n\n"
         else:
-            texto_presupuesto += f"* Yo pago la tasa total de ${format_currency(tasa_legalizacion_digital_total)} ARS.\n"
-        texto_presupuesto += "* No hace falta que vengas a mi domicilio.\n\n---\n\n"
+            texto_presupuesto += f"Yo me encargo de pagar la tasa total de ${format_currency(tasa_legalizacion_digital_total)} ARS.\n\n"
+        texto_presupuesto += "No hace falta que vengas a mi domicilio.\n\n---\n\n"
 
-        # Opción 2 y 3 quedan exactamente como te pasé antes (están perfectas)
+        # Opción 2 – Presencial gestionada por el cliente
+        texto_presupuesto += "### Opción 2: Legalización Presencial (la llevás vos)\n\n"
+        texto_presupuesto += "- Te entrego la/s traducción/es ya firmada/s y abrochada/s al original.\n"
+        texto_presupuesto += "- Vos la/s llevás al Colegio (Av. Corrientes 1834, 9 a 17 hs, sin turno).\n"
+        texto_presupuesto += f"- **Costo total para vos: ${format_currency(total_presencial_cliente)} ARS**\n"
+        texto_presupuesto += f"  → Mis honorarios : ${format_currency(costo_base_traduccion_total)} ARS\n"
+        texto_presupuesto += f"  → Tasa presencial : ${format_currency(TASA_PRESENCIAL_POR_TRADUCCION)} × {cantidad_publicas} = ${format_currency(tasa_legalizacion_presencial_total)} ARS (pagás ahí con tarjeta/transferencia)\n\n---\n\n"
 
-        # === OPCIÓN 2: PRESENCIAL GESTIONADA POR EL CLIENTE ===
-        texto_presupuesto += f"### Opción 2: Legalización Presencial (la llevás vos)\n\n"
-        texto_presupuesto += f"* **Proceso:** Te entrego la/s traducción/es ya firmada/s y abrochada/s al original. Vos las llevás a legalizar al Colegio (Av. Corrientes 1834, de 9 a 17 hs, sin turno).\n"
-        texto_presupuesto += f"* **Costo Total para vos:** **${format_currency(total_opcion_presencial_vos)} ARS**\n"
-        texto_presupuesto += f"* Incluye:\n"
-        texto_presupuesto += f"  • honorarios de traducción: ${format_currency(costo_base_traduccion_total)} ARS\n"
-        texto_presupuesto += f"  • tasa presencial del Colegio: ${format_currency(TASA_PRESENCIAL_POR_TRADUCCION)} ARS × {cantidad_publicas} traducción{'es' if cantidad_publicas > 1 else ''} = **${format_currency(tasa_legalizacion_presencial_total)} ARS** (la pagás directamente ahí con tarjeta o transferencia)\n\n---\n\n"
-
-        # === OPCIÓN 3: PRESENCIAL GESTIONADA POR MÍ ===
-        texto_presupuesto += f"### Opción 3: Legalización Presencial (me ocupo yo de todo)\n\n"
-        texto_presupuesto += f"* **Proceso:** Venís dos veces a mi domicilio:\n"
-        texto_presupuesto += f"  1. A dejarme el/los original/es original/es\n"
-        texto_presupuesto += f"  2. A retirar todo ya legalizado y listo para usar\n"
-        texto_presupuesto += f"* **Costo Total:** **${format_currency(total_opcion_presencial_yo)} ARS**\n"
-        texto_presupuesto += f"* Incluye:\n"
-        texto_presupuesto += f"  • honorarios de traducción: ${format_currency(costo_base_traduccion_total)} ARS\n"
-        texto_presupuesto += f"  • tasa presencial del Colegio ({cantidad_publicas} × ${format_currency(TASA_PRESENCIAL_POR_TRADUCCION)}): ${format_currency(tasa_legalizacion_presencial_total)} ARS\n"
-        texto_presupuesto += f"  • recargo por gestión y traslados: ${format_currency(RECARGO_GESTION_PRESENCIAL_TOTAL)} ARS\n\n---\n\n"
+        # Opción 3 – Presencial gestionada por mí
+        texto_presupuesto += "### Opción 3: Legalización Presencial (me ocupo yo de todo)\n\n"
+        texto_presupuesto += "- Venís dos veces a mi domicilio:\n"
+        texto_presupuesto += "   1. A dejarme el/los original/es\n"
+        texto_presupuesto += "   2. A retirar todo ya legalizado\n"
+        texto_presupuesto += f"- **Costo total: ${format_currency(total_presencial_con_gestion)} ARS**\n"
+        texto_presupuesto += f"  → Honorarios + tasas del Colegio : ${format_currency(total_presencial_cliente)} ARS\n"
+        texto_presupuesto += f"  → Recargo por gestión y traslados  : ${format_currency(RECARGO_GESTION_PRESENCIAL)} ARS\n\n---\n\n"
 
     else:
-        texto_presupuesto += f"Este presupuesto corresponde exclusivamente a traducciones **sin carácter público**, por lo que no requieren legalización del Colegio de Traductores.\n\n---\n\n"
+        texto_presupuesto += "Este presupuesto corresponde solo a **traducciones sin carácter público**, por lo que no requieren legalización del Colegio.\n\n---\n\n"
 
-    texto_presupuesto += f"Quedo a la espera de tu confirmación para ponerme con la traducción. ¡Cualquier duda me avisás!\n\nSaludos,\n[Tu nombre]"
+    texto_presupuesto += "Quedo a la espera de tu confirmación para ponerme manos a la obra.\n\n¡Cualquier duda estoy a disposición!\n\nSaludos,\n[Tu nombre]"
 
     return texto_presupuesto
 
