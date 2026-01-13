@@ -25,46 +25,46 @@ def format_currency(value):
 
 
 def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_traductor):
-    # --- Precios para TRADUCCIONES PÚBLICAS (por foja) ---
+    # --- Precios para TRADUCCIONES PÚBLICAS (por foja) - ACTUALIZADO ENERO 2026 ---
     precios_por_foja = {
         "Al español": {
             "I": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 54300,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 55700,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 62900,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 68500,
+                "Partidas, pasaportes, certificados y demás documentos personales": 60800,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 69900,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 85100,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 85100,
             },
             "II": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 56800,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 67500,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 73000,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 79700,
+                "Partidas, pasaportes, certificados y demás documentos personales": 63800,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 73400,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 89400,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 89400,
             }
         },
         "Al idioma extranjero": {
             "I": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 66300,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 76000,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 81100,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 88100,
+                "Partidas, pasaportes, certificados y demás documentos personales": 73000,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 83900,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 102100,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 102100,
             },
             "II": {
-                "Partidas, pasaportes, certificados y demás documentos personales": 73900,
-                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 89100,
-                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 97000,
-                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 105500,
+                "Partidas, pasaportes, certificados y demás documentos personales": 76600,
+                "Programas de estudios, certificados analíticos, diplomas y demás documentos relacionados con la educación": 88100,
+                "Poderes, escrituras, testamentos, actas y demás documentos notariales; sentencias, expedientes judiciales, exhortos, oficios y demás documentos de índole similar": 107300,
+                "Papeles de comercio, contratos, balances, estatutos, actas de asamblea/directorio y demás documentos societarios; estudios y documentos técnicos y científicos; patentes de invención": 107300,
             }
         }
     }
 
 
-    # --- Precios para TRADUCCIONES SIN CARÁCTER PÚBLICO (por palabra) ---
+    # --- Precios para TRADUCCIONES SIN CARÁCTER PÚBLICO (por palabra) - ACTUALIZADO ENERO 2026 ---
     precios_por_palabra = {
         "Al español": {
-            "I": 101, "II": 103, "III": 127, "IV": 154, "V": 164
+            "I": 123, "II": 129, "III": 154, "IV": 191, "V": 203
         },
         "Al idioma extranjero": {
-            "I": 124, "II": 140, "III": 154, "IV": 185, "V": 205
+            "I": 148, "II": 155, "III": 185, "IV": 229, "V": 244
         }
     }
     MINIMO_PALABRAS_NO_PUBLICAS = 250
@@ -186,13 +186,11 @@ def generar_presupuesto(lista_documentos, tasa_pagada_por_cliente, domicilio_tra
 
     # Contar cuántas traducciones públicas hay en la lista
     # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN (una por cada traducción pública) ---
-    # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN ---
-    # --- CÁLCULO CORRECTO DE TASAS DE LEGALIZACIÓN (una por cada traducción pública) ---
     cantidad_publicas = sum(1 for doc in lista_documentos if doc.get('tipo_traduccion') == "Traducción Pública")
 
-    TASA_DIGITAL_POR_TRADUCCION = 23000
-    TASA_PRESENCIAL_POR_TRADUCCION = 26000
-    RECARGO_GESTION_PRESENCIAL = 26000
+    TASA_DIGITAL_POR_TRADUCCION = 26000
+    TASA_PRESENCIAL_POR_TRADUCCION = 30000
+    RECARGO_GESTION_PRESENCIAL = 30000
 
     tasa_legalizacion_digital_total = TASA_DIGITAL_POR_TRADUCCION * cantidad_publicas
     tasa_legalizacion_presencial_total = TASA_PRESENCIAL_POR_TRADUCCION * cantidad_publicas
